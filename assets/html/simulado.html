@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<!-- Configurações de codificação de caracteres (permite acentos e cedilhas) -->
+<meta charset="UTF-8">
+
+<!-- Meta tags focadas na experiência Mobile (Telemóveis e Tablets) -->
+<!-- Define a largura para o ecrã do dispositivo e impede zooms acidentais ao clicar em botões -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- Cor de fundo da barra de status do navegador no mobile -->
+<meta name="theme-color" content="#0f172a">
+<!-- Descrição da aplicação para motores de busca -->
+<meta name="description" content="Plataforma Inteligente de Simulados para o concursos públicos .">
+
+<title>Simulador Inteligente </title>
+<link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_yR31vsdcQeBHobWEiYWccSqYBaeGelVMFQ&s">
+
+
+<!-- Importação de Tipografia Externa (Google Fonts) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
+
+<!-- LIGAÇÃO PARA O FICHEIRO CSS (Design e Estilos) -->
+<!-- Todo o design visual deve ser colocado num ficheiro chamado "style.css" -->
+<link rel="stylesheet" href="/assets/css/styleSimulado.css">
+<link rel="stylesheet" href="/assets/css/simuladoGraficos.css">
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // Expõe para o nosso scriptSimulado.js
+  window.FirebaseSDK = { initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, getFirestore, doc, setDoc, getDoc, signInWithCustomToken, signInAnonymously };
+</script>
+
+
+</head>
+<body>
+
+<!-- ==========================================
+    CABEÇALHO DA APLICAÇÃO (HEADER)
+    Contém o Logótipo e os Botões de Navegação
+    ========================================== -->
+<header class="header">
+<div class="header-content">
+    <!-- Logótipo da Plataforma -->
+    <div class="logo-container">
+        <!-- Ícone SVG inserido diretamente -->
+        <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Simulador<a href="/index.html" style="text-decoration: none;"> <span class="logo-highlight">Concursos</span></a></span>
+    </div>
+    
+    <!-- Menu de Navegação Superior -->
+    <nav class="nav-bar" aria-label="Navegação principal">
+        <button id="nav-dashboard" data-target="view-dashboard" class="nav-btn active">Painel</button>
+        <button id="nav-simulado" data-target="view-simulado" class="nav-btn">Simulado</button>
+        <button id="nav-data" data-target="view-data" class="nav-btn">Dados (JSON)</button>
+    </nav>
+</div>
+</header>
+
+<!-- ==========================================
+    CONTEÚDO PRINCIPAL (MAIN)
+    Área onde as diferentes páginas são exibidas
+    ========================================== -->
+<main class="main-content">
+<div class="container">
+    
+    <!-- ---------------------------------------
+            PÁGINA 1: DASHBOARD (Painel de Métricas)
+            Mostra estatísticas e histórico do utilizador
+            --------------------------------------- -->
+    <section id="view-dashboard" class="view">
+        <!-- Resumo Numérico e Gráfico de Rosca -->
+        <article class="card mb-6">
+            <div class="stats-overview">
+                <div>
+                    <h2 class="card-title">Desempenho Geral</h2>
+                    <p class="card-subtitle">Métrica global de aproveitamento nas questões.</p>
+                    
+                    <!-- Caixas de Estatísticas Rápidas -->
+                    <div class="stat-boxes">
+                        <div class="stat-box success"><span class="stat-label">Certas</span><span id="stat-certas" class="stat-value">0</span></div>
+                        <div class="stat-box danger"><span class="stat-label">Erradas</span><span id="stat-erradas" class="stat-value">0</span></div>
+                        <div class="stat-box neutral"><span class="stat-label">Por Fazer</span><span id="stat-pendentes" class="stat-value">0</span></div>
+                        <div class="stat-box info"><span class="stat-label">Tempo Médio</span><span id="stat-tempo" class="stat-value">0s</span></div>
+                    </div>
+                </div>
+                
+                <!-- Gráfico Circular Preenchido Dinamicamente via CSS -->
+                <div class="donut-chart" id="main-donut">
+                    <div class="donut-inner"><span id="stat-perc">0%</span><span class="label">Precisão</span></div>
+                </div>
+            </div>
+        </article>
+        <section class="cards-graficos">
+            <!-- Gráficos de barras de desempenho por matéria-->
+            <article class="card mb-6 graph-card">
+                <div class="container-title-graph">
+                    <h3 class="card-title">Desempenho por Matéria</h3>
+                    <p class="card-subtitle">Taxa de acerto acumulada em cada disciplina.</p>
+                </div>
+
+                <div class="bar-chart row-graph" id="materia-bar-chart">
+                    <!-- O JavaScript preencherá este espaço -->
+                </div>
+            </article>
+            <!--Gráficos de barras de desempenho por assunto-->
+            <article class="card mb-6 graph-card">
+                <div class="container-title-graph">
+                    <h3 class="card-title">Desempenho por Assunto</h3>
+                    <p class="card-subtitle">Taxa de acerto acumulada em cada assunto.</p>
+                </div>
+                <div class="bar-chart row-graph" id="assunto-bar-chart">
+                    <!-- O JavaScript preencherá este espaço -->
+                </div>
+            </article>
+        </section>
+
+        <!-- Matriz SWOT (Pontos Fortes vs Pontos de Atenção) -->
+        <div class="dashboard-grid mb-6">
+            <!-- Matérias Fortes -->
+            <article class="card border-strong-green">
+                <header class="swot-header fortes">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="card-title m-0">Matérias Fortes (>80%)</h3>
+                </header>
+                <ul id="swot-fortes" class="swot-list"></ul>
+            </article>
+                       
+            <!-- Matérias Fracas -->
+            <article class="card border-strong-red">
+                <header class="swot-header atencao">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <h3 class="card-title m-0">Matérias de Atenção (<60%)</h3>
+                </header>
+                <ul id="swot-atencao" class="swot-list"></ul>
+            </article>
+             <!--Assuntos Fortes-->
+            <article class="card border-strong-green">
+                <header class="swot-header fortes">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="card-title m-0">Assuntos Geral</h3>
+                </header>
+                <ul id="swot-fortes-assunto" class="swot-list"></ul>
+                <ul id="swot-atencao-assunto" class="swot-list"></ul>
+            </article>
+        </div>
+
+        <!-- Lista de Histórico de Simulados -->
+        <article class="card">
+            <h3 class="card-title">Histórico de Simulados</h3>
+            <p class="card-subtitle">Evolução dos seus treinos ao longo do tempo.</p>
+            <!-- Esta div será preenchida com cartões via JavaScript -->
+            <div id="historico-list" class="history-list"></div>
+        </article>
+    </section>
+
+    <!-- ---------------------------------------
+            PÁGINA 2: SIMULADO (Ação de Estudo)
+            Onde os simulados são configurados e realizados
+            --------------------------------------- -->
+    <section id="view-simulado" class="view hidden-view">
+        <div class="container-sm">
+            
+            <!-- PASSO A: Configuração (Escolha do Modo) -->
+            <article id="simulado-setup" class="card center-text">
+                <h2 class="card-title">Configuração do Simulado</h2>
+                <p class="card-subtitle">Escolha o modo de treino e defina os parâmetros. O sistema adaptativo sempre prioriza o foco nos seus pontos fracos.</p>
+                
+                <!-- Opções de Modo de Simulado -->
+                <div class="setup-grid">
+                    <div class="setup-card active" id="card-modo-livre" data-mode="livre">
+                        <h3>Livre</h3>
+                        <p>Escolha matéria, assunto, tempo e quantidade.</p>
+                    </div>
+                    <div class="setup-card" id="card-modo-cronometrado" data-mode="cronometrado">
+                        <h3>Cronometrado</h3>
+                        <p>Escolha matéria, tempo limite e quantidade.</p>
+                    </div>
+                    <div class="setup-card" id="card-modo-prova" data-mode="prova">
+                        <h3>Prova Oficial</h3>
+                        <p>Molde do edital: 30 questões, 2h30m cronometrados.</p>
+                    </div>
+                </div>
+
+                <!-- Formulário de Filtros Dinâmicos -->
+                <form id="config-form" style="margin-top: 32px; max-width: 400px; margin-left: auto; margin-right: auto; padding-top: 24px; border-top: 1px solid var(--color-border);" onsubmit="event.preventDefault();">
+                    <fieldset style="border: none;">
+
+
+                        <div id="field-materia" class="form-group">
+                            <label for="sel-materia">Matéria:</label>
+                            <select id="sel-materia" class="form-control"></select>
+                        </div>
+
+                       <!-- <div id="field-assunto" class="form-group">
+                            <label for="sel-assunto">Assunto:</label>
+                            <div id="caixa-assuntos" class="checkbox-container"> </div>
+                            <select id="sel-assunto"  class="form-control"></select>
+                        </div>-->
+
+                        <div id="field-assunto" class="form-group">
+                            <label>Assuntos:</label>
+                            <div class="form-assunto-container" >
+                                <div id="dropdown-header" class="form-control" >
+                                    <span id="dropdown-title">Todos os assuntos</span>
+                                    <span><img class="form-img-assunto" src="/assets/img/seta-para-baixo-form-simulado.png" alt="Seta para baixo" class="icon"></span>
+                                </div>
+                                
+                                <div id="caixa-assuntos" class="checkbox-container" >
+                                    </div>
+                            </div>
+                        </div>
+
+                        <div id="field-tempo" class="form-group">
+                            <label for="num-tempo">Tempo limite (em minutos):</label>
+                            <input type="number" id="num-tempo" class="form-control" value="30" min="1">
+                        </div>
+                        <div id="field-qtd" class="form-group">
+                            <label for="num-qtd">Quantidade de Questões:</label>
+                            <input type="number" id="num-qtd" class="form-control" value="10" min="1">
+                        </div>
+                    </fieldset>
+                    
+                    <div class="center-text mt-6" style="margin-top: 32px;">
+                        <button type="button" id="btn-iniciar" class="btn btn-primary btn-large" style="width: 100%;">Começar Ciclo de Estudo</button>
+                    </div>
+                </form>
+            </article>
+
+            <!-- PASSO B: Execução (Resolução da Questão Atual) -->
+            <article id="simulado-runner" class="card p-0 hidden-view">
+                <!-- Cabeçalho da Questão: IDs, Matéria e Relógio -->
+                <header class="runner-header">
+                    <span id="q-header-info" class="runner-topic"></span>
+                    <div class="runner-stats">
+                        <span id="q-timer" class="runner-timer hidden-view">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span id="timer-text">00:00</span>
+                        </span>
+                        <span id="q-counter" class="runner-counter"></span>
+                    </div>
+                </header>
+                
+                <!-- Corpo da Questão -->
+                <div class="p-lg">
+                    <p id="q-enunciado" class="question-text"></p>
+                    
+                    <!-- Imagem opcional da questão -->
+                    <figure id="q-imagem-container" class="question-image hidden-view">
+                        <img id="q-imagem" src="" alt="Imagem complementar à questão">
+                    </figure>
+                    
+                    <!-- Botões com as alternativas A, B, C, D... -->
+                    <div id="q-alternativas" class="options-list" role="radiogroup"></div>
+                    
+                    <!-- Caixa de Feedback (Exibida após responder) -->
+                    <div id="q-feedback" class="hidden-view" aria-live="polite"></div>
+                    
+                    <!-- Controlo de Submissão -->
+                    <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <!-- Botão para interromper o simulado -->
+                    <button id="btn-cancelar" class="btn btn-outline">Cancelar Simulado</button>
+                    
+                    <!-- Botão para submeter a resposta -->
+                    <button id="btn-responder" class="btn btn-primary" disabled>Responder</button>
+                </div>
+                </div>
+            </article>
+            
+            <!-- PASSO C: Conclusão do Simulado -->
+            <article id="simulado-fim" class="card center-text hidden-view">
+                <h2 class="card-title text-success">Simulado Concluído!</h2>
+                <p class="card-subtitle">O seu desempenho foi registado no histórico.</p>
+                <!-- Pontuação final -->
+                <h1 id="fim-score" style="font-size: 3rem; color: var(--color-primary); margin: 16px 0;">0/0</h1>
+                <button id="btn-voltar-painel" class="btn btn-dark">Ver Estatísticas no Painel</button>
+            </article>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------
+            PÁGINA 3: DADOS (Importar e Exportar Backup)
+            Segurança e portabilidade dos dados locais
+            --------------------------------------- -->
+    <section id="view-data" class="view hidden-view">
+        <!-- NOVO: Bloco de Sincronização Google -->
+<article class="card center-text mb-6" style="border-color: #4285F4;">
+    <h2 class="card-title">Sincronização Google Cloud</h2>
+    <p class="card-subtitle">Salve o seu progresso na sua conta Google para nunca perder os seus dados.</p>
+
+    <div id="cloud-logged-out" class="data-actions">
+        <button id="btn-login-google" class="btn btn-primary" style="background-color: #4285F4;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-1.99 5.39-7.84 5.39-5.05 0-9.14-4.17-9.14-9.31s4.09-9.31 9.14-9.31c2.87 0 4.79 1.19 5.88 2.21l2.58-2.48C19.24 1.19 16.14 0 12.48 0 5.58 0 0 5.58 0 12.48s5.58 12.48 12.48 12.48c7.21 0 12-5.08 12-12.21 0-.82-.09-1.44-.21-2.06H12.48z"/></svg>
+            Entrar com Google
+        </button>
+    </div>
+
+    <div id="cloud-logged-in" class="hidden-view">
+        <div class="mb-6">
+            <p style="font-weight: 600; font-size: 0.875rem;">Utilizador: <span id="user-name" class="text-primary">---</span></p>
+        </div>
+        <div class="data-actions" style="flex-direction: row; justify-content: center; gap: 12px;">
+            <button id="btn-cloud-upload" class="btn btn-success">
+                Subir Dados
+            </button>
+            <button id="btn-cloud-download" class="btn btn-primary">
+                Baixar Dados
+            </button>
+            <button id="btn-logout" class="btn btn-outline">Sair</button>
+        </div>
+    </div>
+</article>
+
+        <div class="container-sm">
+            <article class="card center-text">
+                <h2 class="card-title">Backup e Restauro Seguros</h2>
+                <p class="card-subtitle mb-6">Guarde o seu progresso localmente na sua máquina num formato de ficheiro leve, ou carregue um ficheiro anterior.</p>
+                
+                <div class="data-actions">
+                    <!-- Botão para Baixar Ficheiro JSON -->
+                    <button id="btn-exportar" class="btn btn-success btn-large" style="width: 250px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Baixar Backup (.json)
+                    </button>
+                    
+                    <!-- Input para Subir Ficheiro JSON disfarçado de botão -->
+                    <div class="file-upload-wrapper" style="width: 250px;">
+                        <button class="btn btn-primary btn-large" style="width: 100%; pointer-events: none;">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Carregar Backup
+                        </button>
+                        <input type="file" id="btn-importar" accept=".json" aria-label="Escolher ficheiro de backup" />
+                    </div>
+
+                    <!-- Botão de Apagar Dados (Reset) -->
+                    <button id="btn-resetar" class="btn btn-outline" style="margin-top: 32px;">Apagar Tudo (Hard Reset)</button>
+                </div>
+            </article>
+        </div>
+    </section>
+</div>
+</main>
+
+<!-- ==========================================
+    MODAL GLOBAL (Avisos e Confirmações do Sistema)
+    Substitui os pop-ups nativos do navegador (alert, confirm)
+    ========================================== -->
+<div id="custom-modal" class="modal-overlay hidden-view" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+<div class="modal-content">
+    <h3 id="modal-title" class="modal-title"></h3>
+    <p id="modal-msg" class="modal-msg"></p>
+    <!-- Contentor para explicações maiores -->
+    <div id="modal-exp" class="modal-exp hidden-view"></div>
+    
+    <div class="modal-actions">
+        <button id="modal-btn-cancel" class="btn btn-outline hidden-view">Cancelar</button>
+        <button id="modal-btn-ok" class="btn btn-primary">OK</button>
+    </div>
+</div>
+</div>
+
+<script type="module" src="/assets/script/scriptSimulado.js?v=2.1"></script>
+</body>
+</html>

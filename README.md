@@ -1,11 +1,17 @@
-<div align="center">
-
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-
-  <h1>Built with AI Studio</h2>
-
-  <p>The fastest path from prompt to production with Gemini.</p>
-
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
-</div>
+<div align="center"> <img src="./assets/img/Captura de tela 2026-04-19 232251.jpg" alt="Banner Dashboard Tático" width="100%"> --><h1>🎯 Dashboard Tático - Operação CRECI-BA</h1><p><strong>Um web app tático e gamificado projetado para otimizar, organizar e manter a consistência na rotina de estudos para concursos públicos.</strong></p><!-- Badges Tecnológicos --><img src="https://www.google.com/search?q=https://img.shields.io/badge/HTML5-E34F26%3Fstyle%3Dfor-the-badge%26logo%3Dhtml5%26logoColor%3Dwhite" alt="HTML5" /><img src="https://www.google.com/search?q=https://img.shields.io/badge/CSS3-1572B6%3Fstyle%3Dfor-the-badge%26logo%3Dcss3%26logoColor%3Dwhite" alt="CSS3" /><img src="https://www.google.com/search?q=https://img.shields.io/badge/JavaScript-F7DF1E%3Fstyle%3Dfor-the-badge%26logo%3Djavascript%26logoColor%3Dblack" alt="JavaScript" /><img src="https://www.google.com/search?q=https://img.shields.io/badge/PWA-5A0FC8%3Fstyle%3Dfor-the-badge%26logo%3Dpwa%26logoColor%3Dwhite" alt="PWA" />🔗 Acesse o Projeto em Produção https://concursos-alternativos.vercel.app/</div>💡 Sobre o ProjetoEste projeto nasceu da necessidade de resolver problemas reais enfrentados por estudantes de concursos a longo prazo: desorganização e perda de motivação.Através de uma interface limpa baseada em Glassmorphism, o aplicativo oferece controle total sobre as disciplinas, divide o estudo em fases estratégicas e cria um senso de urgência e consistência através de contagens regressivas e controle de ofensivas (streaks), transformando a jornada de estudos em uma experiência gamificada.✨ Funcionalidades⏳ Contagem Regressiva: Acompanhamento dinâmico dos dias restantes até a data da prova.🔥 Sistema de Ofensivas (Streaks): Gamificação que recompensa o usuário por estudar em dias consecutivos, registrando a sequência atual e o recorde (Best Streak).📅 Fases de Estudo: Divisão inteligente do edital em 4 fases progressivas (Base, Consolidação, Reverso e Lapidação).✅ Checklist Reativo e Inteligente: Lista de tarefas que reordena automaticamente os itens concluídos para o final, mantendo o foco do usuário no que importa.📊 Matriz de Prioridades: Organização visual das disciplinas por peso e importância (Alta, Média e Baixa).💾 Persistência e Backup (JSON): Salvamento automático do progresso no navegador (LocalStorage) com opções de exportar e importar o banco de dados via .json.📱 Progressive Web App (PWA): Instalável diretamente na tela inicial do smartphone, comportando-se como um aplicativo nativo (offline-ready).🛠️ Tecnologias e ArquiteturaO projeto foi construído utilizando as bases da web (Vanilla JS), porém focado em uma Arquitetura Limpa e Modular de nível Sênior.Front-end Core: HTML5 Semântico e CSS3 (CSS Variables, Flexbox, Grid, Animações).JavaScript (ES6+): Utilização intensiva de Módulos Nativos (import/export) para desacoplamento de responsabilidades.Padrões de Projeto Aplicados:Module Pattern (IIFE): Isolamento de escopo.Single Source of Truth: Centralização do estado da aplicação no módulo state.js.Wrapper Pattern: Abstração da API nativa do localStorage no módulo storage.js para facilitar futuras migrações (ex: Firebase).📁 Estrutura de Diretórios📦 dashboard-creci
+ ┣ 📂 assets
+ ┃ ┣ 📂 css
+ ┃ ┃ ┗ 📜 style.css
+ ┃ ┣ 📂 img
+ ┃ ┃ ┗ 📜 favicon.png
+ ┃ ┗ 📂 js
+ ┃   ┣ 📂 modules
+ ┃   ┃ ┣ 📜 state.js     # Dados e estado global
+ ┃   ┃ ┣ 📜 storage.js   # Persistência e Wrapper Pattern
+ ┃   ┃ ┣ 📜 ui.js        # Manipulação do DOM
+ ┃   ┃ ┗ 📜 utils.js     # Funções puras
+ ┃   ┗ 📜 main.js        # Maestro/Orquestrador
+ ┣ 📜 index.html
+ ┗ 📜 manifest.json      # Configuração PWA
+🧠 Desafios e AprendizadosDurante o desenvolvimento deste projeto, os principais desafios superados envolveram:Refatoração para Módulos ES6: Migrar um código monolítico para módulos separados exigiu um entendimento profundo de CORS e do ciclo de vida do navegador.Reordenação Dinâmica: Criar um algoritmo eficiente com o método sort() para reposicionar itens do checklist em tempo real sem perder a indexação original.PWA: Entender a fundo como o manifest.json interage com os sistemas operacionais mobile para entregar uma experiência imersiva (standalone).🚀 Como Executar LocalmenteComo o projeto utiliza Módulos ES6, é necessário rodá-lo através de um servidor local.Clone o repositório:git clone [https://github.com/SEU-USUARIO/dashboard-creci.git](https://github.com/SEU-USUARIO/dashboard-creci.git)
+Abra o projeto no VS Code.Instale a extensão Live Server (caso não tenha).Clique com o botão direito no arquivo index.html e selecione "Open with Live Server".Acesse http://127.0.0.1:5500 no seu navegador.📸 Demonstração<!-- Substitua os links abaixo pelas URLs reais das suas imagens -->Visão Geral do DashboardChecklist InteligentePersistência / Backup<img src="https://www.google.com/search?q=https://via.placeholder.com/250x500.png%3Ftext%3DTela%2B1" width="250"><img src="https://www.google.com/search?q=https://via.placeholder.com/250x500.png%3Ftext%3DTela%2B2" width="250"><img src="https://www.google.com/search?q=https://via.placeholder.com/250x500.png%3Ftext%3DTela%2B3" width="250">👨‍💻 AutorCriado e desenvolvido com dedicação por [Seu Nome Aqui].<p align="center">Feito com ☕ e foco na aprovação!</p>

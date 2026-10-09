@@ -1,0 +1,8 @@
+{
+  "name": "Dashboard Tático - SAÚDE BA | PST",
+  "description": "Dashboard tático para planejamento de estudos, acompanhamento de fases e simulados para concursos públicos.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
