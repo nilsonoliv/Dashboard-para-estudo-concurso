@@ -50,4 +50,21 @@ describe('SimuladorView Component', () => {
     expect(screen.getByText('Resposta Correta!')).toBeInTheDocument();
     expect(screen.getByText(/Textos com comandos e instruções são injuntivos/i)).toBeInTheDocument();
   });
+
+  it('exibe o Modo de Revisão e permite iniciar o simulado apenas com questões erradas', () => {
+    localStorage.setItem('simulation_wrong_questions', JSON.stringify([1]));
+    render(<SimuladorView questions={mockQuestions} initialMode="erradas" />);
+
+    // Deve exibir card do Modo de Revisão selecionado
+    expect(screen.getByText('Modo de Revisão')).toBeInTheDocument();
+    expect(screen.getByText(/Modo de Revisão Ativo/i)).toBeInTheDocument();
+
+    // Clica em Iniciar Simulado no Modo de Revisão
+    const startBtn = screen.getByRole('button', { name: /iniciar simulado/i });
+    fireEvent.click(startBtn);
+
+    // Deve exibir o cabeçalho com indicador de Modo Revisão
+    expect(screen.getByText(/Modo Revisão/i)).toBeInTheDocument();
+    expect(screen.getByText('Assinale a alternativa que contém um texto injuntivo:')).toBeInTheDocument();
+  });
 });

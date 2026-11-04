@@ -62,6 +62,19 @@ describe('HomePage Tab Navigation Integration', () => {
     });
   });
 
+  it('alterna para Desempenho ao clicar na aba e exibe a seção #content-desempenho com Recharts', async () => {
+    renderHome();
+    const tabBtn = screen.getByRole('tab', { name: /^desempenho$/i });
+    fireEvent.click(tabBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Painel Tático de Desempenho & Evolução')).toBeInTheDocument();
+      expect(screen.getByText('Taxa de Acertos por Matéria')).toBeInTheDocument();
+      expect(screen.getByText('Evolução do Rendimento ao Longo do Tempo')).toBeInTheDocument();
+      expect(document.getElementById('content-desempenho')).toBeInTheDocument();
+    });
+  });
+
   it('alterna para Checklist ao clicar na aba e exibe a seção #content-check', async () => {
     renderHome();
     const tabBtn = screen.getByRole('tab', { name: /^checklist$/i });

@@ -10,6 +10,7 @@ describe('TabsNav Component', () => {
 
     expect(screen.getByText('Fases')).toBeInTheDocument();
     expect(screen.getByText('Financeiro')).toBeInTheDocument();
+    expect(screen.getByText('Desempenho')).toBeInTheDocument();
     expect(screen.getByText('Checklist')).toBeInTheDocument();
     expect(screen.getByText('Lista Pedagógica')).toBeInTheDocument();
     expect(screen.getByText('Simulador')).toBeInTheDocument();
@@ -22,6 +23,7 @@ describe('TabsNav Component', () => {
 
     const testCases: Array<{ label: string; key: TabKey; target: string }> = [
       { label: 'Financeiro', key: 'financeiro', target: 'escada' },
+      { label: 'Desempenho', key: 'desempenho', target: 'desempenho' },
       { label: 'Checklist', key: 'checklist', target: 'check' },
       { label: 'Lista Pedagógica', key: 'pedagogica', target: 'checklist2' },
       { label: 'Simulador', key: 'simulado', target: 'simulado' },

@@ -8,9 +8,10 @@ import {
   BookOpen,
   Cloud,
   FileQuestion,
+  BarChart3,
 } from 'lucide-react';
 
-export type TabKey = 'fases' | 'financeiro' | 'checklist' | 'pedagogica' | 'backup' | 'simulado';
+export type TabKey = 'fases' | 'financeiro' | 'desempenho' | 'checklist' | 'pedagogica' | 'backup' | 'simulado';
 
 interface TabsNavProps {
   activeTab: TabKey;
@@ -21,6 +22,7 @@ export function TabsNav({ activeTab, onTabChange }: TabsNavProps) {
   const tabs = [
     { key: 'fases' as TabKey, target: 'fases', label: 'Fases', icon: CalendarDays },
     { key: 'financeiro' as TabKey, target: 'escada', label: 'Financeiro', icon: TrendingUp },
+    { key: 'desempenho' as TabKey, target: 'desempenho', label: 'Desempenho', icon: BarChart3 },
     { key: 'checklist' as TabKey, target: 'check', label: 'Checklist', icon: CheckSquare },
     { key: 'pedagogica' as TabKey, target: 'checklist2', label: 'Lista Pedagógica', icon: BookOpen },
     { key: 'simulado' as TabKey, target: 'simulado', label: 'Simulador', icon: FileQuestion, highlight: true },
@@ -65,7 +67,7 @@ export function TabsNav({ activeTab, onTabChange }: TabsNavProps) {
             onPointerUp={() => {
               onTabChange(tab.key);
             }}
-            className={`tab-btn shrink-0 flex items-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-semibold rounded-xl cursor-pointer pointer-events-auto select-none touch-manipulation transition-all duration-200 relative z-10 ${
+            className={`tab-btn shrink-0 flex items-center gap-2 whitespace-nowrap px-3.5 sm:px-4 py-2 sm:py-2.5 min-h-[44px] text-xs sm:text-sm font-semibold rounded-xl cursor-pointer pointer-events-auto select-none touch-manipulation transition-all duration-200 relative z-10 ${
               isActive
                 ? tab.highlight
                   ? 'active bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400/50'

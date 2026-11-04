@@ -37,19 +37,79 @@ export interface QuestionData {
 interface SimuladorViewProps {
   questions: QuestionData[];
   onSessionComplete?: (session: any) => void;
+  initialMode?: Mode;
 }
 
 type Mode = 'livre' | 'cronometrado' | 'erradas';
 
-export function SimuladorView({ questions, onSessionComplete }: SimuladorViewProps) {
+export function SimuladorView({ questions, onSessionComplete, initialMode }: SimuladorViewProps) {
   const { user, getIdToken } = useAuth();
 
   // Mode selection state
-  const [selectedMode, setSelectedMode] = useState<Mode>('livre');
+  const [selectedMode, setSelectedMode] = useState<Mode>(initialMode || 'livre');
   const [selectedSubject, setSelectedSubject] = useState<string>('todos');
   const [selectedTopics, setSelectedTopics] = useState<string[]>(['todos']);
   const [timeMinutes, setTimeMinutes] = useState<number>(30);
   const [questionCount, setQuestionCount] = useState<number>(10);
+  const [wrongQuestionIds, setWrongQuestionIds] = useState<number[]>([]);
+
+  // Update mode when initialMode prop changes
+  useEffect(() => {
+    if (initialMode) {
+      setSelectedMode(initialMode);
+    }
+  }, [initialMode]);
+
+  // Load wrong questions from localStorage or initialize with seed
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('simulation_wrong_questions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setWrongQuestionIds(parsed);
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Default seed for immediate training capability if questions exist
+    if (questions.length > 0) {
+      const sampleSeed = questions.slice(0, 3).map((q) => q.id);
+      setWrongQuestionIds(sampleSeed);
+      try {
+        localStorage.setItem('simulation_wrong_questions', JSON.stringify(sampleSeed));
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [questions]);
+
+  // Helper to remove mastered question from wrong questions
+  const handleRemoveFromWrong = (questionId: number) => {
+    setWrongQuestionIds((prev) => {
+      const updated = prev.filter((id) => id !== questionId);
+      try {
+        localStorage.setItem('simulation_wrong_questions', JSON.stringify(updated));
+      } catch (e) {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  // Helper to add sample wrong questions if notebook is empty
+  const handleSeedWrongQuestions = () => {
+    const ids = questions.slice(0, Math.min(5, questions.length)).map((q) => q.id);
+    setWrongQuestionIds(ids);
+    try {
+      localStorage.setItem('simulation_wrong_questions', JSON.stringify(ids));
+    } catch (e) {
+      // ignore
+    }
+  };
 
   // Simulation runner state
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -110,8 +170,16 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
   }, [isRunning, selectedMode]);
 
   const startSimulation = () => {
-    // Filter questions by subject and topics
+    // Filter questions by mode, subject and topics
     let pool = [...questions];
+
+    if (selectedMode === 'erradas') {
+      pool = pool.filter((q) => wrongQuestionIds.includes(q.id));
+      if (pool.length === 0) {
+        alert('Nenhuma questão encontrada no seu Caderno de Erros para os filtros selecionados.');
+        return;
+      }
+    }
 
     if (selectedSubject !== 'todos') {
       pool = pool.filter((q) => q.subject === selectedSubject);
@@ -157,6 +225,22 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
 
     setUserAnswers((prev) => [...prev, answerRecord]);
     setIsAnswered(true);
+
+    // Track wrong questions persistently
+    if (!isCorrect) {
+      setWrongQuestionIds((prev) => {
+        if (!prev.includes(currentQ.id)) {
+          const updated = [...prev, currentQ.id];
+          try {
+            localStorage.setItem('simulation_wrong_questions', JSON.stringify(updated));
+          } catch (e) {
+            // ignore
+          }
+          return updated;
+        }
+        return prev;
+      });
+    }
   };
 
   const handleNextQuestion = () => {
@@ -230,9 +314,15 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Top Header Runner */}
         <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-blue-600/20 text-blue-400 border border-blue-500/30">
-              Questão {currentIndex + 1} de {activeQuestions.length}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${
+              selectedMode === 'erradas'
+                ? 'bg-rose-600/20 text-rose-400 border-rose-500/30'
+                : selectedMode === 'cronometrado'
+                ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30'
+                : 'bg-blue-600/20 text-blue-400 border-blue-500/30'
+            }`}>
+              {selectedMode === 'erradas' ? 'Modo Revisão • ' : ''}Questão {currentIndex + 1} de {activeQuestions.length}
             </span>
             <span className="text-xs font-medium text-slate-400">
               {currentQ.subject} • {currentQ.topic}
@@ -369,6 +459,25 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
                 )}
               </div>
 
+              {/* Caderno de erros action */}
+              {isAnswered && wrongQuestionIds.includes(currentQ.id) && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-xs">
+                  <span className="text-slate-300">
+                    {selectedOption === currentQ.correctOptionIndex
+                      ? 'Parabéns! Você acertou esta questão pendente do Caderno de Erros.'
+                      : 'Esta questão permanece ativa no seu Caderno de Erros para revisão futura.'}
+                  </span>
+                  {selectedOption === currentQ.correctOptionIndex && (
+                    <button
+                      onClick={() => handleRemoveFromWrong(currentQ.id)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600/30 text-emerald-300 hover:bg-emerald-600 hover:text-white border border-emerald-500/40 font-semibold transition shrink-0"
+                    >
+                      Remover do Caderno de Erros
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-end">
                 <button
                   onClick={handleNextQuestion}
@@ -453,8 +562,8 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
         </div>
       </div>
 
-      {/* Mode Selection Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Mode Selection Cards (Responsive: single-column on mobile, 3 columns on tablet/desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           onClick={() => setSelectedMode('livre')}
           className={`p-5 rounded-2xl border cursor-pointer transition-all ${
@@ -463,13 +572,13 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
               : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400">
               <BookOpen className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Modo Livre / Treino</h3>
-              <p className="text-xs text-slate-400">Resolva no seu próprio ritmo com gabarito comentado instantâneo.</p>
+              <p className="text-xs text-slate-400 mt-1">Resolva no seu próprio ritmo com gabarito comentado instantâneo.</p>
             </div>
           </div>
         </div>
@@ -482,17 +591,64 @@ export function SimuladorView({ questions, onSessionComplete }: SimuladorViewPro
               : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-400">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-400">
               <Clock className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Modo Cronometrado</h3>
-              <p className="text-xs text-slate-400">Simule a pressão do dia da prova com contagem regressiva oficial.</p>
+              <p className="text-xs text-slate-400 mt-1">Simule a pressão do dia da prova com contagem regressiva oficial.</p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          onClick={() => setSelectedMode('erradas')}
+          className={`p-5 rounded-2xl border cursor-pointer transition-all ${
+            selectedMode === 'erradas'
+              ? 'border-rose-500 bg-rose-950/20 ring-1 ring-rose-500/50'
+              : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-600/20 text-rose-400">
+              <RotateCcw className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <h3 className="text-sm font-bold text-white">Modo de Revisão</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  {wrongQuestionIds.length} {wrongQuestionIds.length === 1 ? 'erro' : 'erros'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Treine apenas questões erradas para sanar vulnerabilidades.</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Review Mode Banner / Helper */}
+      {selectedMode === 'erradas' && (
+        <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div>
+            <div className="font-semibold text-rose-300 flex items-center gap-1.5">
+              <RotateCcw className="h-4 w-4 text-rose-400" />
+              Modo de Revisão Ativo
+            </div>
+            <p className="text-slate-300 mt-0.5">
+              O simulado selecionará exclusivamente as {wrongQuestionIds.length} questões com erro registradas no seu histórico.
+            </p>
+          </div>
+          {wrongQuestionIds.length === 0 && (
+            <button
+              onClick={handleSeedWrongQuestions}
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold shrink-0 transition"
+            >
+              Carregar Questões para Revisar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Filters & Configuration */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-5">

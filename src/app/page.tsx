@@ -10,6 +10,7 @@ import { ChecklistTab } from '@/components/ChecklistTab';
 import { PedagogicaTab } from '@/components/PedagogicaTab';
 import { BackupTab } from '@/components/BackupTab';
 import { SimuladorView, QuestionData } from '@/components/SimuladorView';
+import { DesempenhoDashboard } from '@/components/DesempenhoDashboard';
 import { BASE_CHECKLIST_ITEMS, PEDAGOGICAL_CHECKLIST_ITEMS } from '@/data/checklistItems';
 import { ALL_RAW_QUESTIONS } from '@/data/allQuestions';
 
@@ -31,6 +32,7 @@ export default function HomePage() {
   const [pedagogicalState, setPedagogicalState] = useState<Record<string, boolean>>({});
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [simulatorInitialMode, setSimulatorInitialMode] = useState<'livre' | 'cronometrado' | 'erradas'>('livre');
 
   const parseTabKey = (key: string | null): TabKey => {
     if (!key) return 'fases';
@@ -43,6 +45,16 @@ export default function HomePage() {
       clean === 'evolução'
     )
       return 'financeiro';
+    if (
+      clean === 'desempenho' ||
+      clean === 'dashboard' ||
+      clean === 'graficos' ||
+      clean === 'gráficos' ||
+      clean === 'metricas' ||
+      clean === 'métricas' ||
+      clean === 'analytics'
+    )
+      return 'desempenho';
     if (clean === 'check' || clean === 'checklist') return 'checklist';
     if (
       clean === 'checklist2' ||
@@ -57,7 +69,7 @@ export default function HomePage() {
       return 'simulado';
     if (clean === 'backup' || clean === 'nuvem') return 'backup';
     if (clean === 'fases') return 'fases';
-    const valid: TabKey[] = ['fases', 'financeiro', 'checklist', 'pedagogica', 'simulado', 'backup'];
+    const valid: TabKey[] = ['fases', 'financeiro', 'desempenho', 'checklist', 'pedagogica', 'simulado', 'backup'];
     if (valid.includes(clean as TabKey)) return clean as TabKey;
     return 'fases';
   };
@@ -70,6 +82,7 @@ export default function HomePage() {
       if (typeof window !== 'undefined') {
         const hashTarget =
           validTab === 'financeiro' ? 'escada' :
+          validTab === 'desempenho' ? 'desempenho' :
           validTab === 'checklist' ? 'check' :
           validTab === 'pedagogica' ? 'checklist2' :
           validTab;
@@ -497,10 +510,12 @@ export default function HomePage() {
         isStudiedToday={isStudiedToday}
         onStudyToday={handleStudyToday}
         isSyncing={isSyncing}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Main Container (Responsive padding and spacing optimized for mobile) */}
+      <main className="flex-1 mx-auto max-w-7xl w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Navigation Tabs */}
         <TabsNav activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -515,7 +530,10 @@ export default function HomePage() {
             <FasesTab
               phasesCompleted={phasesCompleted}
               onTogglePhase={handleTogglePhase}
-              onOpenSimulado={() => handleTabChange('simulado')}
+              onOpenSimulado={() => {
+                setSimulatorInitialMode('livre');
+                handleTabChange('simulado');
+              }}
             />
           </section>
 
@@ -526,6 +544,21 @@ export default function HomePage() {
             aria-labelledby="tab-btn-escada"
           >
             <FinanceiroTab />
+          </section>
+
+          <section
+            id="content-desempenho"
+            data-tab="desempenho"
+            className={`tab-content ${activeTab === 'desempenho' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-desempenho"
+          >
+            <DesempenhoDashboard
+              questions={questions}
+              onNavigateToSimulado={(mode) => {
+                if (mode) setSimulatorInitialMode(mode);
+                handleTabChange('simulado');
+              }}
+            />
           </section>
 
           <section
@@ -560,7 +593,7 @@ export default function HomePage() {
             className={`tab-content ${activeTab === 'simulado' ? 'active block' : 'hidden'}`}
             aria-labelledby="tab-btn-simulado"
           >
-            <SimuladorView questions={questions} />
+            <SimuladorView questions={questions} initialMode={simulatorInitialMode} />
           </section>
 
           <section

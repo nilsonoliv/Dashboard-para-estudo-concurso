@@ -77,3 +77,21 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Mobile touch targets and responsive card optimization */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (max-width: 768px) {
+  /* Smooth horizontal momentum scrolling for mobile tabs */
+  .tabs-nav {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent horizontal document overflow on small devices (375px-430px) */
+  body, html {
+    overflow-x: hidden;
+  }
+}
