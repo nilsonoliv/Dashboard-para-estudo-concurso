@@ -51,3 +51,29 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Tab Navigation and Content Display */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active,
+.tab-content.block {
+  display: block !important;
+  animation: tabFadeIn 0.25s ease-out;
+}
+
+.tab-content.hidden {
+  display: none !important;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

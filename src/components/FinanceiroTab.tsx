@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   TrendingUp,
   ArrowUpCircle,
@@ -9,6 +9,7 @@ import {
   Wallet,
   Calendar,
   PiggyBank,
+  Coins,
 } from 'lucide-react';
 
 export function FinanceiroTab() {
@@ -52,26 +53,29 @@ export function FinanceiroTab() {
     },
   ];
 
-  const finances = [
-    {
-      name: 'Viagem / Prova Bonito',
-      target: '2026-09-20',
-      ticket: 441,
-      desc: 'Passagem ida e volta calculada (R$ 450 - R$ 9)',
-    },
-    {
-      name: 'IBGE 2',
-      target: '2026-09-27',
-      ticket: 50,
-      desc: 'Custo de inscrição/transporte municipal',
-    },
-    {
-      name: 'Formosa',
-      target: '2026-10-11',
-      ticket: 900,
-      desc: 'Transporte intermunicipal e hospedagem',
-    },
-  ];
+  const calculatedFinances = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const calc = (name: string, targetDateStr: string, ticket: number, desc: string) => {
+      const target = new Date(targetDateStr);
+      const diffMs = target.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffMs / 86400000);
+      const perDay = diffDays > 0 ? ticket / diffDays : 0;
+      return { name, target: targetDateStr, ticket, desc, diffDays, perDay };
+    };
+
+    const items = [
+      calc('Viagem / Prova Bonito', '2026-09-20T00:00:00', 441, 'Passagem ida e volta calculada (R$ 450 - R$ 9)'),
+      calc('IBGE 2', '2026-09-27T00:00:00', 50, 'Custo de inscrição/transporte municipal'),
+      calc('Formosa', '2026-10-11T00:00:00', 900, 'Transporte intermunicipal e hospedagem'),
+    ];
+
+    const totalPerDay = items.reduce((acc, curr) => acc + curr.perDay, 0);
+    const totalCost = items.reduce((acc, curr) => acc + curr.ticket, 0);
+
+    return { items, totalPerDay, totalCost };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -109,29 +113,50 @@ export function FinanceiroTab() {
       </div>
 
       {/* Financial planning card */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Wallet className="h-5 w-5 text-emerald-400" />
-          <h2 className="text-lg font-bold text-white">Planejamento de Custos e Viagens</h2>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-emerald-400" />
+            <h2 className="text-lg font-bold text-white">Planejamento de Custos e Viagens</h2>
+          </div>
+          <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/30 px-3.5 py-1.5 rounded-xl text-xs text-emerald-300">
+            <Coins className="h-4 w-4 text-emerald-400" />
+            <span>Total diário necessário: <strong>R$ {calculatedFinances.totalPerDay.toFixed(1)} / dia</strong></span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {finances.map((item, idx) => (
-            <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-              <div className="flex justify-between items-start">
-                <h3 className="font-semibold text-sm text-slate-200">{item.name}</h3>
-                <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                  R$ {item.ticket}
-                </span>
+          {calculatedFinances.items.map((item, idx) => (
+            <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-start">
+                  <h3 className="font-semibold text-sm text-slate-200">{item.name}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                    R$ {item.ticket}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">{item.desc}</p>
               </div>
-              <p className="text-xs text-slate-400 mt-2">{item.desc}</p>
-              <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3 text-slate-500" /> Data Alvo
-                </span>
-                <span className="font-medium text-slate-300">
-                  {new Date(item.target).toLocaleDateString('pt-BR')}
-                </span>
+
+              <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1.5 text-xs text-slate-400">
+                <div className="flex justify-between">
+                  <span>Dias restantes:</span>
+                  <span className="font-semibold text-amber-400">
+                    {item.diffDays > 0 ? `${item.diffDays} dias` : 'Chegou o dia!'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Juntar por dia:</span>
+                  <span className="font-semibold text-emerald-400">
+                    {item.diffDays > 0 ? `R$ ${item.perDay.toFixed(1)} /dia` : 'R$ 0,00'}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] pt-1 text-slate-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Data
+                  </span>
+                  <span>{new Date(item.target).toLocaleDateString('pt-BR')}</span>
+                </div>
               </div>
             </div>
           ))}

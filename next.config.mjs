@@ -5,6 +5,18 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/index.html',
+        destination: '/',
+      },
+      {
+        source: '/assets/html/simulado.html',
+        destination: '/simulado',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

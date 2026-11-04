@@ -662,6 +662,10 @@ class AppGestor {
 
     async inicializarFirebase() {
         try {
+            if (typeof window.FirebaseSDK === 'undefined' || typeof __firebase_config === 'undefined') {
+                console.log("Firebase config not provided, running in local mode.");
+                return;
+            }
             const { initializeApp, getAuth, onAuthStateChanged, getFirestore, signInWithCustomToken, signInAnonymously } = window.FirebaseSDK;
             const config = JSON.parse(__firebase_config);
             const app = initializeApp(config);

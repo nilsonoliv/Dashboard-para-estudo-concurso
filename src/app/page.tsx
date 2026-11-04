@@ -32,6 +32,54 @@ export default function HomePage() {
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
+  const parseTabKey = (key: string | null): TabKey => {
+    if (!key) return 'fases';
+    const clean = key.replace('#', '').replace(/^content-/, '').toLowerCase();
+    if (
+      clean === 'escada' ||
+      clean === 'financeiro' ||
+      clean === 'prioridades' ||
+      clean === 'evolucao' ||
+      clean === 'evolução'
+    )
+      return 'financeiro';
+    if (clean === 'check' || clean === 'checklist') return 'checklist';
+    if (
+      clean === 'checklist2' ||
+      clean === 'pedagogica' ||
+      clean === 'pedagogico' ||
+      clean === 'pedagógica' ||
+      clean === 'lista-pedagogica' ||
+      clean === 'lista'
+    )
+      return 'pedagogica';
+    if (clean === 'simulado' || clean === 'simulador' || clean === 'questoes' || clean === 'questões')
+      return 'simulado';
+    if (clean === 'backup' || clean === 'nuvem') return 'backup';
+    if (clean === 'fases') return 'fases';
+    const valid: TabKey[] = ['fases', 'financeiro', 'checklist', 'pedagogica', 'simulado', 'backup'];
+    if (valid.includes(clean as TabKey)) return clean as TabKey;
+    return 'fases';
+  };
+
+  const handleTabChange = (newTab: TabKey) => {
+    const validTab = parseTabKey(newTab);
+    setActiveTab(validTab);
+    try {
+      localStorage.setItem('activeTab', validTab);
+      if (typeof window !== 'undefined') {
+        const hashTarget =
+          validTab === 'financeiro' ? 'escada' :
+          validTab === 'checklist' ? 'check' :
+          validTab === 'pedagogica' ? 'checklist2' :
+          validTab;
+        window.history.replaceState(null, '', `#${hashTarget}`);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   // Helper for today's date in YYYY-MM-DD
   const getTodayStr = () => {
     const d = new Date();
@@ -87,6 +135,42 @@ export default function HomePage() {
         if (val === 'true') pedSaved[item.id] = true;
       });
       setPedagogicalState(pedSaved);
+
+      // Active Tab restoration from hash or storage
+      const hashTab = window.location.hash ? parseTabKey(window.location.hash) : null;
+      const storedTab = localStorage.getItem('activeTab') ? parseTabKey(localStorage.getItem('activeTab')) : null;
+      if (hashTab) {
+        setActiveTab(hashTab);
+      } else if (storedTab) {
+        setActiveTab(storedTab);
+      }
+
+      const onHashChange = () => {
+        setActiveTab(parseTabKey(window.location.hash));
+      };
+      window.addEventListener('hashchange', onHashChange);
+
+      // Global click handler to capture any tab clicks (from nav, buttons, links, etc.)
+      const onDocumentClick = (e: MouseEvent) => {
+        const el = (e.target as HTMLElement | null)?.closest?.('.tab-btn, [data-target], [data-tab]');
+        if (el) {
+          const raw = el.getAttribute('data-tab') || el.getAttribute('data-target');
+          if (raw) {
+            handleTabChange(parseTabKey(raw));
+          }
+        }
+      };
+      document.addEventListener('click', onDocumentClick);
+
+      // Expose switchTab globally for legacy scripts or console evaluation
+      (window as any).switchTab = (targetId: string) => {
+        handleTabChange(parseTabKey(targetId));
+      };
+
+      return () => {
+        window.removeEventListener('hashchange', onHashChange);
+        document.removeEventListener('click', onDocumentClick);
+      };
     } catch (e) {
       console.error('Failed to load local storage state:', e);
     }
@@ -418,41 +502,73 @@ export default function HomePage() {
       {/* Main Container */}
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Navigation Tabs */}
-        <TabsNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabsNav activeTab={activeTab} onTabChange={handleTabChange} />
 
         {/* Tab Contents */}
         <div className="pt-2">
-          {activeTab === 'fases' && (
+          <section
+            id="content-fases"
+            data-tab="fases"
+            className={`tab-content ${activeTab === 'fases' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-fases"
+          >
             <FasesTab
               phasesCompleted={phasesCompleted}
               onTogglePhase={handleTogglePhase}
-              onOpenSimulado={() => setActiveTab('simulado')}
+              onOpenSimulado={() => handleTabChange('simulado')}
             />
-          )}
+          </section>
 
-          {activeTab === 'financeiro' && <FinanceiroTab />}
+          <section
+            id="content-escada"
+            data-tab="financeiro"
+            className={`tab-content ${activeTab === 'financeiro' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-escada"
+          >
+            <FinanceiroTab />
+          </section>
 
-          {activeTab === 'checklist' && (
+          <section
+            id="content-check"
+            data-tab="checklist"
+            className={`tab-content ${activeTab === 'checklist' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-check"
+          >
             <ChecklistTab
               checklistState={checklistState}
               onToggleItem={handleToggleChecklistItem}
               onReset={handleResetChecklist}
             />
-          )}
+          </section>
 
-          {activeTab === 'pedagogica' && (
+          <section
+            id="content-checklist2"
+            data-tab="pedagogica"
+            className={`tab-content ${activeTab === 'pedagogica' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-checklist2"
+          >
             <PedagogicaTab
               pedagogicalState={pedagogicalState}
               onToggleItem={handleTogglePedagogicalItem}
               onReset={handleResetPedagogical}
             />
-          )}
+          </section>
 
-          {activeTab === 'simulado' && (
+          <section
+            id="content-simulado"
+            data-tab="simulado"
+            className={`tab-content ${activeTab === 'simulado' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-simulado"
+          >
             <SimuladorView questions={questions} />
-          )}
+          </section>
 
-          {activeTab === 'backup' && (
+          <section
+            id="content-backup"
+            data-tab="backup"
+            className={`tab-content ${activeTab === 'backup' ? 'active block' : 'hidden'}`}
+            aria-labelledby="tab-btn-backup"
+          >
             <BackupTab
               onExportJSON={handleExportJSON}
               onImportJSON={handleImportJSON}
@@ -460,7 +576,7 @@ export default function HomePage() {
               onPullCloud={handlePullCloud}
               onHardReset={handleHardReset}
             />
-          )}
+          </section>
         </div>
       </main>
 
